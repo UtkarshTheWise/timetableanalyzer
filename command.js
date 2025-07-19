@@ -28,8 +28,8 @@
     courseCells.forEach(cell => {
       const pTags = cell.querySelectorAll("p");
       if (pTags.length >= 1) {
-        const rawCodeName = pTags[0].innerText.trim(); // e.g., "BACHY109 - Applied Chemistry"
-        const extra = pTags[1]?.innerText?.trim() ?? ""; // e.g., "( Embedded Theory )"
+        const rawCodeName = pTags[0].innerText.trim(); 
+        const extra = pTags[1]?.innerText?.trim() ?? ""; 
         const match = rawCodeName.match(/^([A-Z]+\d+)\s*-\s*(.+)$/);
 
         if (match) {
