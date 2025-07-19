@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="calendar.js"></script>
+  <title>Timetable Analyzer</title>
+  <style>
+    body {
+  margin: 0;
+  height: 100vh;
+  background: radial-gradient(circle at top left, #1a1a1a, #000000);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(90deg, #00fff0, #0066ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+h2 {
+  font-size: 1.2rem;
+  font-weight: normal;
+  color: #aaa;
+}
+
+.hover-utax {
+  display: inline-block;
+  position: relative; /* Keep this to position the absolute pseudo-element */
+  cursor: pointer;
+}
+
+.hover-utax::before { /* Use ::before for "Utax" */
+  content: 'Utax';
+  color: #ffffff; /* Or your desired initial color */
+  transition: opacity 0.3s;
+  padding-right: 90px;
+  min-width: 120px;
+}
+
+.hover-utax::after {
+  content: 'Utkarsh Mishra';
+  position: absolute; /* Make it absolute to take it out of flow */
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transition: opacity 0.3s;
+  color: #00ffcc;
+  white-space: nowrap; /* Prevent the name from wrapping */
+}
+
+.hover-utax:hover::before { /* Hide "Utax" on hover */
+  opacity: 0;
+}
+
+.hover-utax:hover::after {
+  opacity: 1;
+}
+
+.upload-btn {
+  background: linear-gradient(135deg, #00c6ff, #0072ff);
+  border: none;
+  border-radius: 16px;
+  padding: 15px 30px;
+  font-size: 1rem;
+  color: #fff;
+  cursor: pointer;
+  margin-top: 2rem;
+  box-shadow: 0 8px 15px rgba(0, 123, 255, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.upload-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 20px rgba(0, 123, 255, 0.5);
+}
+
+input[type="file"] {
+  display: none;
+}
+  </style>
+</head>
+<body>
+  <h1>Timetable Analyzer</h1>
+  <h2>Created by <span class="hover-utax"></span>, Shreyash Saxena and Arihant Singh</h2>
+
+  <label for="file-upload" class="upload-btn">Upload Timetable JSON</label>
+  <input type="file" id="file-upload" accept="application/json" />
+  <script src="calendar.js"></script>
+</body>
+</html>
