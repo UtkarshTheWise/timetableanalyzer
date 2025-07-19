@@ -142,13 +142,41 @@ input[type="file"] {
   border-radius: 12px;
 }
 
+a {
+  color: #ffffff;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0%;
+  height: 2px;
+  background-color: #ffffff;
+  transition: width 0.3s ease;
+  opacity: 0.6;
+}
+
+a:hover {
+  color: #ffffff;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.7);
+}
+
+a:hover::after {
+  width: 100%;
+  opacity: 1;
+}
 
 
   </style>
 </head>
 <body>
   <h1>Timetable Analyzer</h1>
-  <h2>Created by <span class="hover-utax"></span>, Shreyash Saxena and Arihant Singh</h2>
+  <h2>Created by <a span class="hover-utax" href="http://instagram.com/thisisutax"></span></a>, <a href="http://instagram.com/sr3ysh">Shreyash Saxena</a> and <a href="http://instagram.com/arihant_908">Arihant Singh</a></h2>
   <button id="copy-js" class="copy-btn">Copy Console Command Code</button>
   <label for="file-upload" class="upload-btn">Upload Timetable JSON</label>
   <input type="file" id="file-upload" accept="application/json" />
