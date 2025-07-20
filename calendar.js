@@ -57,12 +57,14 @@ function generateICS(timetable) {
     const summary = `${courseTitle} [${typeLabel}]`;
     const location = `${entry.block} - ${entry.room}`;
     const description = `${courseTitle} at ${entry.block} ${entry.room} [${typeLabel}]`;
+    const untilDate = '20251121T235900Z';
 
     ics += `BEGIN:VEVENT\n`;
     ics += `UID:${uid}\n`;
     ics += `DTSTAMP:${dtStamp}\n`;
     ics += `DTSTART;TZID=Asia/Kolkata:${formatLocalDate(start)}\n`;
     ics += `DTEND;TZID=Asia/Kolkata:${formatLocalDate(end)}\n`;
+    ics += `RRULE:FREQ=WEEKLY;UNTIL=${untilDate}\n`;
     ics += `SUMMARY:${summary}\n`;
     ics += `LOCATION:${location}\n`;
     ics += `DESCRIPTION:${description}\n`;
