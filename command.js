@@ -1,112 +1,114 @@
-document.getElementById("file-upload").addEventListener("change", handleFileUpload);
+(function () {
+  const START_HOUR = 8;
+  const dayOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
-function handleFileUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+  function formatTime(hour, minute) {
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  }
 
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    try {
-      const data = JSON.parse(e.target.result);
-      const calendarData = generateICS(data);
-      downloadICS(calendarData);
-    } catch (err) {
-      alert("Invalid JSON file.");
-      console.error(err);
-    }
-  };
-  reader.readAsText(file);
-}
+  function getTimeSlot(index, duration) {
+    const totalMinutes = index * duration;
+    const startHour = Math.floor(START_HOUR + totalMinutes / 60);
+    const startMinute = totalMinutes % 60;
 
-function generateICS(timetable) {
-  const dayMap = {
-    "Monday": 1,
-    "Tuesday": 2,
-    "Wednesday": 3,
-    "Thursday": 4,
-    "Friday": 5,
-    "Saturday": 6,
-    "Sunday": 0,
-  };
+    const endMinutesTotal = totalMinutes + duration;
+    const endHour = Math.floor(START_HOUR + endMinutesTotal / 60);
+    const endMinute = endMinutesTotal % 60;
 
-  const pad = (n) => (n < 10 ? "0" + n : n);
-  const now = new Date();
-  const nextWeekMonday = new Date(now.setDate(now.getDate() + ((8 - now.getDay()) % 7)));
+    return {
+      startTime: formatTime(startHour, startMinute),
+      endTime: formatTime(endHour, endMinute),
+    };
+  }
 
-  const escapeICS = (str) =>
-    str.replace(/\\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+  function getCourseMap() {
+    const courseMap = {};
+    const courseCells = document.querySelectorAll(".table-responsive td");
 
-  let ics = `BEGIN:VCALENDAR
-VERSION:2.0
-CALSCALE:GREGORIAN
-METHOD:PUBLISH
-X-WR-CALNAME:Timetable
-X-WR-TIMEZONE:Asia/Kolkata
-`;
+    courseCells.forEach(cell => {
+      const pTags = cell.querySelectorAll("p");
+      if (pTags.length >= 1) {
+        const rawCodeName = pTags[0].innerText.trim(); 
+        const extra = pTags[1]?.innerText?.trim() ?? ""; 
+        const match = rawCodeName.match(/^([A-Z]+\d+)\s*-\s*(.+)$/);
 
-  timetable.forEach((entry, index) => {
-    const { day, startTime, endTime, courseName, block, room } = entry;
-    const dow = dayMap[day];
-    if (dow === undefined) return;
+        if (match) {
+          const [_, code, name] = match;
+          courseMap[code] = extra ? `${name} ${extra}` : name;
+        }
+      }
+    });
 
-    const eventDate = new Date(nextWeekMonday);
-    eventDate.setDate(nextWeekMonday.getDate() + dow - 1);
+    return courseMap;
+  }
 
-    const [sh, sm] = startTime.split(":").map(Number);
-    const [eh, em] = endTime.split(":").map(Number);
+  function parseRow(label, day = "Monday") {
+    const rows = Array.from(document.querySelectorAll('tr[style*="#FFFFCC"]'));
+    const row = rows.find(r =>
+      r.innerText.includes(label) && r.innerText.includes(day.slice(0, 3).toUpperCase())
+    ) || rows.find(r => r.innerText.startsWith(label));
 
-    const start = new Date(eventDate);
-    const end = new Date(eventDate);
-    start.setHours(sh, sm, 0);
-    end.setHours(eh, em, 0);
+    if (!row) return [];
 
-    const dtStamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-    const uid = `class-${index}-${Date.now()}@utax-calendar`;
+    const cells = Array.from(row.querySelectorAll("td"));
+    const offset = (label === "THEORY") ? 2 : 1;
+    const entries = cells.slice(offset);
+    const duration = label === "LAB" ? 50 : 55;
 
-    const formatDate = (d) =>
-      `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+    const events = [];
 
-    const location = escapeICS(`${block}, Room ${room}`);
-    const summary = escapeICS(courseName);
-    const description = escapeICS(`${courseName} in ${block} Room ${room}`);
-    const category = entry.type === "LAB" ? "Lab" : "Theory";
-    let color = '11';
-    if (entry.room.endsWith('L')) color = '1';
+    entries.forEach((cell, index) => {
+      const text = cell.innerText.trim();
+      if (!text || text.toLowerCase() === "lunch") return;
 
-    ics += `BEGIN:VEVENT
-UID:${uid}
-DTSTAMP:${dtStamp}
-DTSTART;TZID=Asia/Kolkata:${formatDate(start)}
-DTEND;TZID=Asia/Kolkata:${formatDate(end)}
-SUMMARY:${summary}
-LOCATION:${location}
-DESCRIPTION:${description}
-CATEGORIES:${category}
-BEGIN:VALARM
-TRIGGER:-PT30M
-ACTION:DISPLAY
-DESCRIPTION:Reminder
-X-GOOGLE-CALENDAR-COLOR:${color}
-END:VALARM
-BEGIN:VALARM
-TRIGGER:-PT15M
-ACTION:DISPLAY
-DESCRIPTION:Reminder
-END:VALARM
-END:VEVENT
-`;
+      const parts = text.split("-");
+      if (parts.length < 5) return;
+
+      const { startTime, endTime } = getTimeSlot(index, duration);
+
+      events.push({
+        day,
+        type: label,
+        startTime,
+        endTime,
+        slot: parts[0],
+        courseCode: parts[1],
+        subType: parts[2],
+        block: parts[3],
+        room: parts[4],
+        group: parts[5] || "",
+        rawText: text
+      });
+    });
+
+    return events;
+  }
+
+  const courseMap = getCourseMap();
+
+  const allEvents = [];
+
+  dayOrder.forEach(day => {
+    allEvents.push(...parseRow("THEORY", day), ...parseRow("LAB", day));
   });
 
-  ics += `END:VCALENDAR`;
-  return ics;
-}
+  const enrichedEvents = allEvents.map(event => ({
+    ...event,
+    courseName: courseMap[event.courseCode] || "Unknown Course"
+  }));
 
-function downloadICS(content) {
-  const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
+  const sortedEvents = enrichedEvents.sort((a, b) => {
+    const dayCompare = dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day);
+    if (dayCompare !== 0) return dayCompare;
+    return a.startTime.localeCompare(b.startTime);
+  });
+
+  const blob = new Blob([JSON.stringify(sortedEvents, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "Timetable.ics";
+  a.download = "timetable.json";
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
-}
+  document.body.removeChild(a);
+})();
