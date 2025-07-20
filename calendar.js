@@ -12,7 +12,7 @@ document.getElementById('file-upload').addEventListener('change', function (even
 
 function generateICS(timetable) {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const semesterStart = new Date('2025-07-21T00:00:00');
+  const semesterStart = new Date('2025-07-21T00:00:00'); // Monday
 
   function getClassDate(weekdayName) {
     const targetDay = days.indexOf(weekdayName);
@@ -35,7 +35,25 @@ function generateICS(timetable) {
     );
   };
 
-  let ics = `BEGIN:VCALENDAR\nVERSION:2.0\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\nPRODID:-//Utax Timetable Generator//EN\n`;
+  const crlf = '\r\n';
+
+  let ics = `BEGIN:VCALENDAR${crlf}`;
+  ics += `VERSION:2.0${crlf}`;
+  ics += `CALSCALE:GREGORIAN${crlf}`;
+  ics += `METHOD:PUBLISH${crlf}`;
+  ics += `PRODID:-//Utax Timetable Generator//EN${crlf}`;
+
+  // Define Asia/Kolkata timezone
+  ics += `BEGIN:VTIMEZONE${crlf}`;
+  ics += `TZID:Asia/Kolkata${crlf}`;
+  ics += `X-LIC-LOCATION:Asia/Kolkata${crlf}`;
+  ics += `BEGIN:STANDARD${crlf}`;
+  ics += `TZOFFSETFROM:+0530${crlf}`;
+  ics += `TZOFFSETTO:+0530${crlf}`;
+  ics += `TZNAME:IST${crlf}`;
+  ics += `DTSTART:19700101T000000${crlf}`;
+  ics += `END:STANDARD${crlf}`;
+  ics += `END:VTIMEZONE${crlf}`;
 
   timetable.forEach(entry => {
     const classDate = getClassDate(entry.day);
@@ -65,19 +83,19 @@ function generateICS(timetable) {
     const description = `${courseTitle} at ${entry.block} ${entry.room} [${typeLabel}]`;
     const untilDate = '20251121T235900Z';
 
-    ics += `BEGIN:VEVENT\n`;
-    ics += `UID:${uid}\n`;
-    ics += `DTSTAMP:${dtStamp}\n`;
-    ics += `DTSTART;TZID=Asia/Kolkata:${formatLocalDate(start)}\n`;
-    ics += `DTEND;TZID=Asia/Kolkata:${formatLocalDate(end)}\n`;
-    ics += `RRULE:FREQ=WEEKLY;UNTIL=${untilDate}\n`;
-    ics += `SUMMARY:${summary}\n`;
-    ics += `LOCATION:${location}\n`;
-    ics += `DESCRIPTION:${description}\n`;
-    ics += `X-GOOGLE-CALENDAR-COLOR:${color}\n`;
-    ics += `BEGIN:VALARM\nTRIGGER:-PT30M\nACTION:DISPLAY\nDESCRIPTION:Reminder\nEND:VALARM\n`;
-    ics += `BEGIN:VALARM\nTRIGGER:-PT15M\nACTION:DISPLAY\nDESCRIPTION:Reminder\nEND:VALARM\n`;
-    ics += `END:VEVENT\n`;
+    ics += `BEGIN:VEVENT${crlf}`;
+    ics += `UID:${uid}${crlf}`;
+    ics += `DTSTAMP:${dtStamp}${crlf}`;
+    ics += `DTSTART;TZID=Asia/Kolkata:${formatLocalDate(start)}${crlf}`;
+    ics += `DTEND;TZID=Asia/Kolkata:${formatLocalDate(end)}${crlf}`;
+    ics += `RRULE:FREQ=WEEKLY;UNTIL=${untilDate}${crlf}`;
+    ics += `SUMMARY:${summary}${crlf}`;
+    ics += `LOCATION:${location}${crlf}`;
+    ics += `DESCRIPTION:${description}${crlf}`;
+    ics += `X-GOOGLE-CALENDAR-COLOR:${color}${crlf}`;
+    ics += `BEGIN:VALARM${crlf}TRIGGER:-PT30M${crlf}ACTION:DISPLAY${crlf}DESCRIPTION:Reminder${crlf}END:VALARM${crlf}`;
+    ics += `BEGIN:VALARM${crlf}TRIGGER:-PT15M${crlf}ACTION:DISPLAY${crlf}DESCRIPTION:Reminder${crlf}END:VALARM${crlf}`;
+    ics += `END:VEVENT${crlf}`;
   });
 
   ics += `END:VCALENDAR`;
@@ -91,3 +109,4 @@ function generateICS(timetable) {
   link.click();
   document.body.removeChild(link);
 }
+
