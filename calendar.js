@@ -12,45 +12,51 @@ document.getElementById('file-upload').addEventListener('change', function (even
 
 function generateICS(timetable) {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const startDate = new Date();
-  while (days[startDate.getDay()] !== 'Monday') {
-    startDate.setDate(startDate.getDate() + 1);
+  const semesterStart = new Date('2025-07-21T00:00:00');
+
+  function getClassDate(weekdayName) {
+    const targetDay = days.indexOf(weekdayName);
+    const delta = (targetDay - semesterStart.getDay() + 7) % 7;
+    const classDate = new Date(semesterStart);
+    classDate.setDate(semesterStart.getDate() + delta);
+    return classDate;
   }
+
+  const formatLocalDate = date => {
+    const pad = n => String(n).padStart(2, '0');
+    return (
+      date.getFullYear() +
+      pad(date.getMonth() + 1) +
+      pad(date.getDate()) +
+      'T' +
+      pad(date.getHours()) +
+      pad(date.getMinutes()) +
+      '00'
+    );
+  };
 
   let ics = `BEGIN:VCALENDAR\nVERSION:2.0\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\nPRODID:-//Utax Timetable Generator//EN\n`;
 
   timetable.forEach(entry => {
-    const dayIndex = days.indexOf(entry.day);
-    const classDate = new Date(startDate);
-    classDate.setDate(startDate.getDate() + (dayIndex - 1));
+    const classDate = getClassDate(entry.day);
 
     const [startHour, startMin] = entry.startTime.split(":").map(Number);
     const [endHour, endMin] = entry.endTime.split(":").map(Number);
 
-    const start = new Date(classDate.getFullYear(), classDate.getMonth(), classDate.getDate(), startHour, startMin);
-    const end = new Date(classDate.getFullYear(), classDate.getMonth(), classDate.getDate(), endHour, endMin);
+    const start = new Date(classDate);
+    start.setHours(startHour, startMin);
+
+    const end = new Date(classDate);
+    end.setHours(endHour, endMin);
 
     const uid = `${entry.rawText}-${start.toISOString()}`;
     const dtStamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 
-    const formatLocalDate = date => {
-      const pad = n => String(n).padStart(2, '0');
-      return (
-        date.getFullYear() +
-        pad(date.getMonth() + 1) +
-        pad(date.getDate()) +
-        'T' +
-        pad(date.getHours()) +
-        pad(date.getMinutes()) +
-        '00'
-      );
-    };
-
     let typeLabel = 'THEORY';
-    let color = '11'; // Default: Blue (Theory)
+    let color = '11'; // Blue
     if (entry.slot && entry.slot.toUpperCase().startsWith('L')) {
       typeLabel = 'LAB';
-      color = '1'; // Red (Lab)
+      color = '1'; // Red
     }
 
     const courseTitle = entry.courseName.replace(/\s*\(.*?\)\s*/g, '').trim();
