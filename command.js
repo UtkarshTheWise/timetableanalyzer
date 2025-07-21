@@ -1,114 +1,198 @@
 (function () {
-  const START_HOUR = 8;
   const dayOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
-  function formatTime(hour, minute) {
-    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-  }
-
-  function getTimeSlot(index, duration) {
-    const totalMinutes = index * duration;
-    const startHour = Math.floor(START_HOUR + totalMinutes / 60);
-    const startMinute = totalMinutes % 60;
-
-    const endMinutesTotal = totalMinutes + duration;
-    const endHour = Math.floor(START_HOUR + endMinutesTotal / 60);
-    const endMinute = endMinutesTotal % 60;
-
-    return {
-      startTime: formatTime(startHour, startMinute),
-      endTime: formatTime(endHour, endMinute),
-    };
-  }
+  const theoryStartTimes = [
+    "08:00",
+    "08:55",
+    "09:50",
+    "10:45",
+    "11:40",
+    "12:35",
+    "Lunch",
+    "14:00",
+    "14:55",
+    "15:50",
+    "16:45",
+    "17:40",
+    "18:35",
+  ];
+  const theoryEndTimes = [
+    "08:50",
+    "09:45",
+    "10:40",
+    "11:35",
+    "12:30",
+    "13:25",
+    "Lunch",
+    "14:50",
+    "15:45",
+    "16:40",
+    "17:35",
+    "18:30",
+    "19:25",
+  ];
+  const labStartTimes = [
+    "08:00",
+    "08:50",
+    "09:50",
+    "10:40",
+    "11:40",
+    "12:30",
+    "Lunch",
+    "14:00",
+    "14:50",
+    "15:50",
+    "16:40",
+    "17:40",
+    "18:30",
+  ];
+  const labEndTimes = [
+    "08:50",
+    "09:40",
+    "10:40",
+    "11:30",
+    "12:30",
+    "13:20",
+    "Lunch",
+    "14:50",
+    "15:40",
+    "16:40",
+    "17:30",
+    "18:30",
+    "19:20",
+  ];
 
   function getCourseMap() {
     const courseMap = {};
     const courseCells = document.querySelectorAll(".table-responsive td");
 
-    courseCells.forEach(cell => {
+    courseCells.forEach((cell) => {
       const pTags = cell.querySelectorAll("p");
       if (pTags.length >= 1) {
-        const rawCodeName = pTags[0].innerText.trim(); 
-        const extra = pTags[1]?.innerText?.trim() ?? ""; 
-        const match = rawCodeName.match(/^([A-Z]+\d+)\s*-\s*(.+)$/);
-
+        const rawCourseInfo = pTags[0].innerText.trim();
+        const courseType = pTags[1]?.innerText?.trim() ?? "";
+        const match = rawCourseInfo.match(/^([A-Z0-9]+)\s*[-–—]\s*(.+)$/);
         if (match) {
           const [_, code, name] = match;
-          courseMap[code] = extra ? `${name} ${extra}` : name;
+          courseMap[code] = courseType.includes("Embedded Lab")
+            ? name
+            : courseType
+            ? `${name} ${courseType.replace(/[()]/g, "").trim()}`
+            : name;
         }
       }
     });
-
     return courseMap;
   }
 
-  function parseRow(label, day = "Monday") {
-    const rows = Array.from(document.querySelectorAll('tr[style*="#FFFFCC"]'));
-    const row = rows.find(r =>
-      r.innerText.includes(label) && r.innerText.includes(day.slice(0, 3).toUpperCase())
-    ) || rows.find(r => r.innerText.startsWith(label));
+  function parseRow(label, day, row) {
+  if (!row) return [];
+  const cells = Array.from(row.querySelectorAll("td"));
+  const dataCells = label === "THEORY" ? cells.slice(2) : cells.slice(1);
 
-    if (!row) return [];
+  const startTimes = label === "THEORY" ? theoryStartTimes : labStartTimes;
+  const endTimes = label === "THEORY" ? theoryEndTimes : labEndTimes;
 
-    const cells = Array.from(row.querySelectorAll("td"));
-    const offset = (label === "THEORY") ? 2 : 1;
-    const entries = cells.slice(offset);
-    const duration = label === "LAB" ? 50 : 55;
+  const events = [];
+  let timeIndex = 0;
 
-    const events = [];
+  for (let i = 0; i < dataCells.length && timeIndex < startTimes.length; i++) {
+    const text = dataCells[i].innerText.trim();
+    const startTime = startTimes[timeIndex];
+    const endTime = endTimes[timeIndex];
 
-    entries.forEach((cell, index) => {
-      const text = cell.innerText.trim();
-      if (!text || text.toLowerCase() === "lunch") return;
+    timeIndex++;
 
-      const parts = text.split("-");
-      if (parts.length < 5) return;
+    if (
+      !text ||
+      text.toLowerCase() === "lunch" ||
+      /^[A-Z]+\d+$/.test(text) ||
+      startTime === "Lunch"
+    )
+      continue;
 
-      const { startTime, endTime } = getTimeSlot(index, duration);
+    const parts = text.split("-");
+    if (parts.length < 5) continue;
 
-      events.push({
-        day,
-        type: label,
-        startTime,
-        endTime,
-        slot: parts[0],
-        courseCode: parts[1],
-        subType: parts[2],
-        block: parts[3],
-        room: parts[4],
-        group: parts[5] || "",
-        rawText: text
-      });
+    const [slot, courseCode, subType, block, room, group = ""] = parts;
+
+    events.push({
+      day,
+      type: label,
+      startTime,
+      endTime,
+      slot,
+      courseCode,
+      subType,
+      block,
+      room,
+      group,
+      rawText: text,
     });
-
-    return events;
   }
 
-  const courseMap = getCourseMap();
+  return events;
+}
 
-  const allEvents = [];
 
-  dayOrder.forEach(day => {
-    allEvents.push(...parseRow("THEORY", day), ...parseRow("LAB", day));
-  });
 
-  const enrichedEvents = allEvents.map(event => ({
-    ...event,
-    courseName: courseMap[event.courseCode] || "Unknown Course"
-  }));
+  function executeParser() {
+    try {
+      const courseMap = getCourseMap();
+      let allEvents = [];
+      const rows = Array.from(
+        document.querySelectorAll(
+          ".table-responsive table#timeTableStyle tbody tr"
+        )
+      );
 
-  const sortedEvents = enrichedEvents.sort((a, b) => {
-    const dayCompare = dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day);
-    if (dayCompare !== 0) return dayCompare;
-    return a.startTime.localeCompare(b.startTime);
-  });
+      for (let i = 0; i < rows.length - 1; i++) {
+        const theoryRow = rows[i];
+        const cells = Array.from(theoryRow.querySelectorAll("td"));
+        const dayCode = cells[0]?.innerText.trim();
+        const label = cells[1]?.innerText.trim();
 
-  const blob = new Blob([JSON.stringify(sortedEvents, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "timetable.json";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+        if (!dayCode || label !== "THEORY") continue;
+
+        const fullDay = dayOrder.find(
+          (d) => d.slice(0, 3).toUpperCase() === dayCode.toUpperCase()
+        );
+        if (!fullDay) continue;
+
+        allEvents.push(...parseRow("THEORY", fullDay, theoryRow));
+        allEvents.push(...parseRow("LAB", fullDay, rows[i + 1]));
+        i++;
+      }
+
+      const enrichedEvents = allEvents.map((event) => ({
+        ...event,
+        courseName: courseMap[event.courseCode] || "Unknown Course",
+      }));
+
+      const sorted = enrichedEvents.sort((a, b) => {
+        const d = dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day);
+        return d !== 0 ? d : a.startTime.localeCompare(b.startTime);
+      });
+
+      const blob = new Blob([JSON.stringify(sorted, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "timetable.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+    } catch (err) {
+      console.error("Parser failed:", err);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", executeParser);
+  } else {
+    executeParser();
+  }
 })();
