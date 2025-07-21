@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Common Timetable Checker</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: radial-gradient(circle at top left, #1a1a1a, #000000);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 3rem;
+      background: linear-gradient(90deg, #00fff0, #0066ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-label,
+    .check-btn {
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      border: none;
+      border-radius: 16px;
+      padding: 15px 30px;
+      font-size: 1rem;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 8px 15px rgba(0, 123, 255, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin: 10px;
+    }
+
+    .home-btn {
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      border: none;
+      border-radius: 16px;
+      padding: 15px 30px;
+      font-size: 1rem;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 8px 15px rgba(0, 123, 255, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin: 50px;
+    }
+
+    .home-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 20px rgba(0, 123, 255, 0.5);
+    }
+
+    .file-label:hover,
+    .check-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 20px rgba(0, 123, 255, 0.5);
+    }
+
+    .results-container {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 800px;
+      width: 100%;
+      margin-top: 20px;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.05);
+    }
+
+    .results-container h3 {
+      color: #00ffff;
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+    }
+
+    .result-item {
+      background-color: #111;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin: 8px 0;
+      box-shadow: 0 0 12px rgba(0, 255, 255, 0.05);
+      font-family: monospace;
+    }
+
+    .output-row {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1000px;
+  margin-top: 20px;
+}
+
+.results-container {
+  flex: 1 1 400px;
+  min-width: 300px;
+}
+
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Check for Common Classes or Free Time</h1>
+
+    <label class="file-label" for="fileInput">Upload JSON Files</label>
+    <input type="file" id="fileInput" multiple accept="application/json" />
+
+    <button class="check-btn" onclick="checkCommon()">Check Common Time</button>
+    
+
+    <div class="output-row">
+  <div class="results-container" id="commonClassesBox">
+    <h3>Common Classes:</h3>
+  </div>
+  <div class="results-container" id="freeSlotsBox">
+    <h3>Common Free Slots:</h3>
+  </div>
+  </div>
+  <button class="home-btn" onclick="checkCommon()">Home Page</button>
+
+  <script>
+    function parseEvents(file, callback) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          callback(data);
+        } catch (e) {
+          alert(`Invalid JSON in file: ${file.name}`);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function checkCommon() {
+      const input = document.getElementById("fileInput");
+      const files = Array.from(input.files);
+      if (files.length < 2) {
+        alert("Please upload at least two JSON files.");
+        return;
+      }
+
+      const allTimetables = [];
+      let filesRead = 0;
+
+      files.forEach(file => {
+        parseEvents(file, (data) => {
+          allTimetables.push(data);
+          filesRead++;
+          if (filesRead === files.length) {
+            analyzeCommon(allTimetables);
+          }
+        });
+      });
+    }
+
+    function analyzeCommon(timetables) {
+      document.getElementById("commonClassesBox").innerHTML = "<h3>Common Classes:</h3>";
+      document.getElementById("freeSlotsBox").innerHTML = "<h3>Common Free Slots:</h3>";
+
+      const slotMap = {};
+
+      timetables.forEach((events, userIndex) => {
+        events.forEach(evt => {
+            const key = `${evt.day}-${evt.startTime}-${evt.endTime}-${evt.courseCode}`; 
+            if (!slotMap[key]) slotMap[key] = new Set();
+            slotMap[key].add(userIndex);
+        });
+      });
+
+      const totalUsers = timetables.length;
+      const commonEvents = [];
+      const freeSlots = [];
+
+      for (const key in slotMap) {
+        if (slotMap[key].size === totalUsers) {
+          commonEvents.push(key);
+        }
+      }
+
+      const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+      const times = [
+        ["08:00", "08:50"], ["08:55", "09:45"], ["09:50", "10:40"], ["10:45", "11:35"],
+        ["11:40", "12:30"], ["12:35", "13:25"], ["14:00", "14:50"], ["14:55", "15:45"],
+        ["15:50", "16:40"], ["16:45", "17:35"], ["17:40", "18:30"], ["18:35", "19:25"]
+      ];
+
+      days.forEach(day => {
+        times.forEach(([start, end]) => {
+          const key = `${day}-${start}-${end}`;
+          if (!slotMap[key]) {
+            freeSlots.push(key);
+          }
+        });
+      });
+
+      const formatList = (items) => {
+        if (items.length === 0) return `<div class="result-item">None</div>`;
+        return items.map(item => `<div class="result-item">${item}</div>`).join("");
+      };
+
+        document.getElementById("commonClassesBox").innerHTML += formatList(commonEvents);
+        document.getElementById("freeSlotsBox").innerHTML += formatList(freeSlots);
+    }
+  </script>
+  <script>
+  document.getElementById('time-js').addEventListener('click', () => {
+  window.location.href = 'index.html';
+});
+</script>
+</body>
+</html>

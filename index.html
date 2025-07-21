@@ -209,6 +209,7 @@ a:hover::after {
   ⚠️ <strong>Important:</strong> Please ensure your timetable is finalized and updated before uploading.
   All calendar events will be set to repeat weekly for the entire semester (21st July to 21st November 2025).
 </div>
+<button id="time-js" class="copy-btn">Find Common Classes/Time Slots</button>
 </section>
 
   <script src="calendar.js"></script>
@@ -223,6 +224,11 @@ document.getElementById('copy-js').addEventListener('click', async () => {
     alert('Failed to copy script.');
     console.error(err);
   }
+});
+</script>
+<script>
+  document.getElementById('time-js').addEventListener('click', () => {
+  window.location.href = 'freetime.html';
 });
 </script>
 </body>
