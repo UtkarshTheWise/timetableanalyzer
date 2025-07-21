@@ -67,7 +67,7 @@ X-WR-TIMEZONE:Asia/Kolkata
       `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
 
     const location = escapeICS(`${block}, Room ${room}`);
-    const summary = escapeICS(courseName);
+    const summary = escapeICS(`[${entry.type}] ${courseName}`);
     const description = escapeICS(`${courseName} in ${block} Room ${room}`);
     const category = entry.type === "LAB" ? "Lab" : "Theory";
     let color = '11';
