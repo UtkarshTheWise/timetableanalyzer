@@ -31,7 +31,8 @@ function generateICS(timetable) {
 
   const pad = (n) => (n < 10 ? "0" + n : n);
   const now = new Date();
-  const nextWeekMonday = new Date(now.setDate(now.getDate() + ((8 - now.getDay()) % 7)));
+  const currentWeekMonday = new Date(now);
+  currentWeekMonday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
 
   const escapeICS = (str) =>
     str.replace(/\\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
@@ -49,8 +50,8 @@ X-WR-TIMEZONE:Asia/Kolkata
     const dow = dayMap[day];
     if (dow === undefined) return;
 
-    const eventDate = new Date(nextWeekMonday);
-    eventDate.setDate(nextWeekMonday.getDate() + dow - 1);
+    const eventDate = new Date(currenttWeekMonday);
+    eventDate.setDate(currentWeekMonday.getDate() + dow - 1);
 
     const [sh, sm] = startTime.split(":").map(Number);
     const [eh, em] = endTime.split(":").map(Number);
@@ -112,3 +113,4 @@ function downloadICS(content) {
   URL.revokeObjectURL(url);
 
 }
+
