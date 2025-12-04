@@ -50,7 +50,7 @@ X-WR-TIMEZONE:Asia/Kolkata
     const dow = dayMap[day];
     if (dow === undefined) return;
 
-    const eventDate = new Date(currenttWeekMonday);
+    const eventDate = new Date(currentWeekMonday);
     eventDate.setDate(currentWeekMonday.getDate() + dow - 1);
 
     const [sh, sm] = startTime.split(":").map(Number);
@@ -113,4 +113,5 @@ function downloadICS(content) {
   URL.revokeObjectURL(url);
 
 }
+
 
