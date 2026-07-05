@@ -31,7 +31,7 @@ function generateICS(timetable) {
 
   const pad = (n) => (n < 10 ? "0" + n : n);
   const now = new Date();
-  const currentWeekMonday = new Date(now);
+  const currentWeekMonday = new Date(2026, 6, 6);
   currentWeekMonday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
 
   const escapeICS = (str) =>
