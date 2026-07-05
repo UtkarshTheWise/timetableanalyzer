@@ -177,7 +177,7 @@ a:hover::after {
 </head>
 <body>
   <h1>Timetable Analyzer</h1>
-  <h2>Created by <a span class="hover-utax" href="http://instagram.com/thisisutax"></span></a>, <a href="http://instagram.com/sr3ysh">Shreyash Saxena</a> and <a href="http://instagram.com/arihant_908">Arihant Singh</a></h2>
+  <h2>Created by <a span class="hover-utax" href="http://instagram.com/thisisutax"></span></a></h2>
   <button id="copy-js" class="copy-btn">Copy Console Command Code</button>
   <label for="file-upload" class="upload-btn">Upload Timetable JSON</label>
   <input type="file" id="file-upload" accept="application/json" />
@@ -195,7 +195,7 @@ a:hover::after {
   </div>
   <div class="note-box">
   ⚠️ <strong>Important:</strong> Please ensure your timetable is finalized and updated before uploading.
-  All calendar events will be set to repeat weekly for the entire semester (4th December to 23rd April 2026).
+  All calendar events will be set to repeat weekly for the entire semester (6th July to 11th November 2026).
 </div>
 <button id="time-js" class="copy-btn">Find Common Classes/Time Slots</button>
 </section>
@@ -204,7 +204,7 @@ a:hover::after {
   <script>
 document.getElementById('copy-js').addEventListener('click', async () => {
   try {
-    const response = await fetch('command.js'); // or replace with actual JS filename
+    const response = await fetch('command.js'); 
     const jsCode = await response.text();
     await navigator.clipboard.writeText(jsCode);
     alert('Script copied to clipboard!');
