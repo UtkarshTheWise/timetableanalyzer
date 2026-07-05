@@ -79,7 +79,7 @@ UID:${uid}
 DTSTAMP:${dtStamp}
 DTSTART;TZID=Asia/Kolkata:${formatDate(start)}
 DTEND;TZID=Asia/Kolkata:${formatDate(end)}
-RRULE:FREQ=WEEKLY;UNTIL=20260423T235900Z
+RRULE:FREQ=WEEKLY;UNTIL=20261103T235900Z
 SUMMARY:${summary}
 LOCATION:${location}
 DESCRIPTION:${description}
